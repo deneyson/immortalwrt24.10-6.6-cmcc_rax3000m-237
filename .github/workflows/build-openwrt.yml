@@ -130,7 +130,9 @@ jobs:
         rm -rf *.buildinfo
         rm -rf *.manifest
         rm -rf *.json
-        rm -rf *bl2.bin
+        rm -rf *.bin
+        rm -rf *.fip
+        rm -rf *recovery.itb
         echo "FIRMWARE=$PWD" >> $GITHUB_ENV
         echo "status=success" >> $GITHUB_OUTPUT
 

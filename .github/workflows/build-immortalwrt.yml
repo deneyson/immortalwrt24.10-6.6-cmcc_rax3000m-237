@@ -1,4 +1,4 @@
-name: Build ImmortalWrt MT798X 6.6
+name: Build ImmortalWrt MT7981 6.6
 
 on:
   repository_dispatch:
@@ -10,7 +10,7 @@ on:
         default: 'false'
 
 env:
-  REPO_URL: https://github.com/youyip/immortalwrt-mt798x-6.6 
+  REPO_URL: https://github.com
   REPO_BRANCH: openwrt-24.10-6.6
   FEEDS_CONF: feeds.conf.default
   CONFIG_FILE: .config
@@ -64,7 +64,12 @@ jobs:
 
     - name: Load custom configuration (Part 2)
       run: |
-        [ -e $CONFIG_FILE ] && cp $CONFIG_FILE openwrt/.config
+        if [ -e $CONFIG_FILE ]; then
+          cp $CONFIG_FILE openwrt/.config
+        else
+          cp openwrt/defconfig/mt7981-ax3000.config openwrt/.config
+          echo "使用了源码自带的 MT7981 默认预设配置"
+        fi
         chmod +x $DIY_P2_SH
         cd openwrt
         $GITHUB_WORKSPACE/$DIY_P2_SH
@@ -72,9 +77,6 @@ jobs:
     - name: SSH connection to Actions
       uses: P3TERX/ssh2actions@main
       if: (github.event.inputs.ssh == 'true' && github.event.inputs.ssh != 'false') || contains(github.event.action, 'ssh')
-      env:
-        TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
 
     - name: Download package
       id: package
@@ -98,9 +100,7 @@ jobs:
 
     - name: Check space usage
       if: (!cancelled())
-      run: |
-        df -hT
-        pip3 install requests
+      run: df -hT
 
     - name: Upload bin directory
       uses: actions/upload-artifact@v4
@@ -131,7 +131,7 @@ jobs:
       run: |
         echo "release_tag=$(date +"%Y.%m.%d-%H%M")" >> $GITHUB_OUTPUT
         touch release.txt
-        echo "ImmortalWrt MT798X 内核 6.6 固件发布" >> release.txt
+        echo "ImmortalWrt MT7981 内核 6.6 固件发布" >> release.txt
         echo "status=success" >> $GITHUB_OUTPUT
 
     - name: Upload firmware to release

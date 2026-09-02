@@ -82,7 +82,6 @@ jobs:
       id: package
       run: |
         cd openwrt
-        # 关键修复点：在下载前，必须单线程将基础预设补全展开
         make defconfig
         make download -j8
         find dl -size -1024c -exec ls -l {} \;
@@ -93,13 +92,11 @@ jobs:
       run: |
         cd openwrt
         echo -e "$(nproc) thread compile"
-        # 再次执行 defconfig 兜底校验
         make defconfig
-        # 开始编译，若失败自动降级到单线程输出详细错误日志
         make -j$(nproc) || make -j1 || make -j1 V=s
         echo "status=success" >> $GITHUB_OUTPUT
-        grep '^CONFIG_TARGET.*DEVICE.*=y' .config | sed -r 's/CONFIG_TARGET_(.*)_DEVICE_(.*)=y/\1-\2/' > DEVICE_NAME
-        [ -s DEVICE_NAME ] && echo "DEVICE_NAME=_$(cat DEVICE_NAME)" >> $GITHUB_ENV
+        
+        # 修复点：彻底移除不合规的设备名写入变量逻辑，改用安全的纯时间戳命名发布
         echo "FILE_DATE=_$(date +"%Y%m%d%H%M")" >> $GITHUB_ENV
 
     - name: Check space usage
@@ -110,7 +107,7 @@ jobs:
       uses: actions/upload-artifact@v4
       if: steps.compile.outputs.status == 'success' && env.UPLOAD_BIN_DIR == 'true'
       with:
-        name: OpenWrt_bin${{ env.DEVICE_NAME }}${{ env.FILE_DATE }}
+        name: OpenWrt_bin${{ env.FILE_DATE }}
         path: openwrt/bin
 
     - name: Organize files
@@ -136,7 +133,7 @@ jobs:
       uses: actions/upload-artifact@v4
       if: steps.organize.outputs.status == 'success' && !cancelled()
       with:
-        name: OpenWrt_firmware${{ env.DEVICE_NAME }}${{ env.FILE_DATE }}
+        name: OpenWrt_firmware${{ env.FILE_DATE }}
         path: ${{ env.FIRMWARE }}
 
     - name: Generate release tag
@@ -157,3 +154,4 @@ jobs:
         tag_name: ${{ steps.tag.outputs.release_tag }}
         body_path: release.txt
         files: ${{ env.FIRMWARE }}/*
+

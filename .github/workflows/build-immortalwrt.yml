@@ -1,4 +1,4 @@
-name: Build ImmortalWrt MT7981 6.6
+name: Build ImmortalWrt TP-Link WMA301 v2.1
 
 on:
   repository_dispatch:
@@ -68,7 +68,7 @@ jobs:
           cp $CONFIG_FILE openwrt/.config
         else
           cp openwrt/defconfig/mt7981-ax3000.config openwrt/.config
-          echo "使用了源码自带的 MT7981 默认预设配置"
+          echo "已成功应用 MT7981 默认预设配置！"
         fi
         chmod +x $DIY_P2_SH
         cd openwrt
@@ -111,11 +111,22 @@ jobs:
 
     - name: Organize files
       id: organize
-      if: env.UPLOAD_FIRMWARE == 'true' && !cancelled()
+      if: steps.compile.outputs.status == 'success' && env.UPLOAD_FIRMWARE == 'true' && !cancelled()
       run: |
         cd openwrt/bin/targets/*/*
         rm -rf packages
-        echo "FIRMWARE=$PWD" >> $GITHUB_ENV
+        # 建立专用的输出目录，避免打包非固件文件
+        mkdir -p $GITHUB_WORKSPACE/firmware
+        cp -f *sysupgrade.bin $GITHUB_WORKSPACE/firmware/ 2>/dev/null || true
+        cp -f *initramfs-kernel.bin $GITHUB_WORKSPACE/firmware/ 2>/dev/null || true
+        cp -f *factory.bin $GITHUB_WORKSPACE/firmware/ 2>/dev/null || true
+        
+        if [ -z "$(ls -A $GITHUB_WORKSPACE/firmware)" ]; then
+          echo "错误：未发现编译生成的有效固件，请检查前一步的编译日志！"
+          exit 1
+        fi
+        
+        echo "FIRMWARE=$GITHUB_WORKSPACE/firmware" >> $GITHUB_ENV
         echo "status=success" >> $GITHUB_OUTPUT
 
     - name: Upload firmware directory
@@ -127,11 +138,11 @@ jobs:
 
     - name: Generate release tag
       id: tag
-      if: env.UPLOAD_RELEASE == 'true' && !cancelled()
+      if: steps.organize.outputs.status == 'success' && env.UPLOAD_RELEASE == 'true' && !cancelled()
       run: |
         echo "release_tag=$(date +"%Y.%m.%d-%H%M")" >> $GITHUB_OUTPUT
         touch release.txt
-        echo "ImmortalWrt MT7981 内核 6.6 固件发布" >> release.txt
+        echo "TP-Link WMA301 v2.1 (MT7981 6.6内核) 固件发布" >> release.txt
         echo "status=success" >> $GITHUB_OUTPUT
 
     - name: Upload firmware to release

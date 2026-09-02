@@ -1,8 +1,19 @@
 #!/bin/bash
+#
+# Copyright (c) 2019-2020 P3TERX <https://p3terx.com>
+#
+# This is free software, licensed under the MIT License.
+# See /LICENSE for more information.
+#
+# https://github.com/P3TERX/Actions-OpenWrt
+# File name: diy-part1.sh
+# Description: OpenWrt DIY script part 1 (Before Update feeds)
+#
 
-# 修复作者源码中可能存在的 feeds 错误空链接
-sed -i '/https:\/\/github.com\/\s*$/d' feeds.conf.default
-sed -i 's|https://github.com/|https://github.com|g' feeds.conf.default 2>/dev/null || true
-
-# 示例：如果你想顺便顺便添加点好用的第三方插件源，可以取消下面这行的注释（前面的#）：
-# echo 'src-git small8 https://github.com' >> feeds.conf.default
+# Uncomment a feed source
+#sed -i 's/^#\(.*helloworld\)/\1/' feeds.conf.default
+# Add a feed source
+#echo 'src-git helloworld https://github.com/fw876/helloworld' >>feeds.conf.default
+#echo 'src-git passwall https://github.com/xiaorouji/openwrt-passwall' >>feeds.conf.default
+#git clone https://github.com/gdy666/luci-app-lucky.git package/lucky
+#git clone https://github.com/sbwml/luci-app-openlist2 package/openlist

@@ -74,6 +74,10 @@ jobs:
         cd openwrt
         $GITHUB_WORKSPACE/$DIY_P2_SH
 
+    - name: SSH connection to Actions
+      uses: P3TERX/ssh2actions@main
+      if: (github.event.inputs.ssh == 'true' && github.event.inputs.ssh != 'false') || contains(github.event.action, 'ssh')
+
     - name: Download package
       id: package
       run: |
@@ -83,20 +87,12 @@ jobs:
         find dl -size -1024c -exec ls -l {} \;
         find dl -size -1024c -exec rm -f {} \;
 
-    # ======= 移动到这里的 SSH 步骤 =======
-    - name: SSH connection to Actions
-      uses: P3TERX/ssh2actions@main
-      if: (github.event.inputs.ssh == 'true' && github.event.inputs.ssh != 'false') || contains(github.event.action, 'ssh')
-      env:
-        TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
-
     - name: Compile the firmware
       id: compile
       run: |
         cd openwrt
         echo -e "$(nproc) thread compile"
-        # 注意：这里已经删除了重复的 make defconfig，防止覆盖你在 SSH 里手动修改好的配置
+        make defconfig
         make -j$(nproc) || make -j1 || make -j1 V=s
         echo "status=success" >> $GITHUB_OUTPUT
         
@@ -158,4 +154,3 @@ jobs:
         tag_name: ${{ steps.tag.outputs.release_tag }}
         body_path: release.txt
         files: ${{ env.FIRMWARE }}/*
-

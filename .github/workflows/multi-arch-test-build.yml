@@ -17,8 +17,8 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - arch: arm_cortex-a15_neon-vfpv4
-            target: armvirt-32
+          - arch: aarch64_cortex-a53
+            target: mvebu-cortexa53
 
     steps:
       - name: Free Disk Space
